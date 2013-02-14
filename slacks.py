@@ -15,3 +15,23 @@ Written in Spring 2013 by Michael Comella (mcomella).
 
 CONSULT_DIR = '/admin/consult/'
 SCHED_DIR = CONSULT_DIR + 'data/sched/'
+
+import argparse
+
+def main():
+    args = set_and_parse_args()
+
+def set_and_parse_args():
+    """Sets up, parses and returns any command line arguments.
+
+    The arguments are returned as the object returned from the
+    argparse.ArgumentParser.parse_args() method.
+
+    """
+    parser = argparse.ArgumentParser()
+    # TODO: -m: with monikers
+    # TODO: -w: specify a week (+/-int, int, & all)
+    return parser.parse_args()
+
+if __name__ == '__main__':
+    main()
