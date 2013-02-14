@@ -10,5 +10,5 @@ If you want to start a pants war, edit pants.json.
 
 History
 -------
-* Revision 002, trousers: nmalkin (Fall 2012)
-* Revision 001, pants: unknown (?)
+* Revision 002, trousers (Fall 2012): nmalkin
+* Revision 001, pants (?): unknown
