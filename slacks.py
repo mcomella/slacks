@@ -19,6 +19,7 @@ SCHED_DIR = CONSULT_DIR + 'data/sched/'
 META_FILE = SCHED_DIR + 'sched.meta' # Metadata file associated with csched.
 START_WEEK = 0 # The index of the initial consulting week.
 
+ERR_LOGTAG = 'depantsed! -'
 
 from datetime import datetime
 import argparse
