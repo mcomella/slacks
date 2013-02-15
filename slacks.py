@@ -12,6 +12,7 @@ Pacifists are boring! Go start a pants war! Edit pants.json today!
 
 Written in Spring 2013 by Michael Comella (mcomella).
 """
+# TODO: Merge the above text with the README text.
 
 CONSULT_DIR = '/admin/consult/'
 SCHED_DIR = CONSULT_DIR + 'data/sched/'
@@ -29,8 +30,6 @@ ERR_LOGTAG = 'depantsed! -'
 from datetime import datetime
 import argparse
 import sys
-
-pp = PrettyPrinter(indent=4)
 
 def main():
     args = set_and_parse_args()
@@ -56,13 +55,20 @@ def get_metadata():
     has the expected format:
 
     MM/DD/YYYY num_weeks extend_start sched_header
-    where MM/DD/YYYY   = (str) the start date of the semester
-          num_weeks    = (int) the number of weeks in the semester
+    where start_date = (str) the start date of the semester as MM/DD/YYYY
+          num_weeks = (int) the number of weeks in the semester
           extend_start = (int) the number weeks before extended hours (reading
                          period) begins
           sched_header = (str) the text displayed at the top of the schedule
 
-    Returns an instance of the Metadata class with these values.
+    Returns a dictionary of metadata: {
+        'start_date': (datetime) See above
+        'num_weeks': (int) See above
+        'extend_start': (int) See above
+        'sched_header': (str) See above
+        'cur_week': (int) A value specifying the number of weeks since the
+                        starting week
+    }
 
     """
     with open(META_FILE) as f:
@@ -70,37 +76,25 @@ def get_metadata():
         if len(file_lines) is not 1:
             exit('get_metadata', 'Unknown format in "' + META_FILE + '".')
         # string.split(sep=whitespace, maxsplit=3).
-        # TODO: Just give file to Metadata class.
-        return Metadata(*tuple(file_lines[0].split(None, 3)))
-
-class Metadata:
-    """A module for miscellaneous csched metadata."""
-    # TODO: Implement __str__.
-    # TODO: Implement __repr__.
-
-    def __init__(self, start_date, num_weeks, extend_start, sched_header):
-        """Creates an instance of the Metadata class.
-
-        Arguments should be passed as found in the META_FILE (see
-        get_metadata()).
-
-        """
-        self.num_weeks = int(num_weeks)
-        self.extend_start = int(extend_start)
-        self.sched_header = sched_header.rstrip()
+        start_date, num_weeks, extend_start, sched_header = tuple(
+                file_lines[0].split(None, 3))
+        md = {
+            'num_weeks': int(num_weeks),
+            'extend_start': int(extend_start),
+            'sched_header': sched_header.rstrip()
+        }
 
         # TODO: Handle dates specified with leading zeroes.
-        # Convert date from string to datetime instance.
         date_list = [int(x) for x in start_date.split('/')]
         if len(date_list) is not 3:
-            exit('Metadata.__init__', 'Unknown date format in "' + META_FILE +
-                    '".')
-        self.start_date = datetime(date_list[2], date_list[0],
+            exit('get_metadata', 'Unknown date format in "' + META_FILE + '".')
+        md['start_date'] = datetime(date_list[2], date_list[0],
                 date_list[1]) # YMD.
 
         # TODO: Make sure this actually returns the correct week.
-        date_delta = datetime.now() - self.start_date
-        self.cur_week = date_delta.days / 7 + START_WEEK
+        date_delta = datetime.now() - md['start_date']
+        md['cur_week'] = date_delta.days / 7 + START_WEEK
+        return md
 
 def get_perm_sched():
     # TODO: Add doc.
