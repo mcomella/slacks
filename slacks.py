@@ -60,7 +60,7 @@ def get_metadata():
     with open(META_FILE) as f:
         file_lines = f.readlines()
         if len(file_lines) is not 1:
-            exit('Unknown format in "' + META_FILE + '".')
+            exit('get_metadata', 'Unknown format in "' + META_FILE + '".')
         # string.split(sep=whitespace, maxsplit=3).
         return Metadata(*tuple(file_lines[0].split(None, 3)))
 
@@ -84,14 +84,16 @@ class Metadata:
         # Convert date from string to datetime instance.
         date_list = [int(x) for x in start_date.split('/')]
         if len(date_list) is not 3:
-            exit('Unknown date format in "' + META_FILE + '".')
+            exit('Metadata.__init__', 'Unknown date format in "' + META_FILE +
+                    '".')
         self.start_date = datetime(date_list[2], date_list[0],
                 date_list[1]) # YMD.
 
         date_delta = datetime.now() - self.start_date
         self.cur_week = date_delta.days / 7 + START_WEEK
 
-def exit(message): sys.exit(ERR_LOGTAG + message)
+def exit(func_name, message):
+    sys.exit(ERR_LOGTAG + ' ' + func_name + '(): ' + message)
 
 if __name__ == '__main__':
     main()
