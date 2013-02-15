@@ -16,7 +16,10 @@ Written in Spring 2013 by Michael Comella (mcomella).
 CONSULT_DIR = '/admin/consult/'
 SCHED_DIR = CONSULT_DIR + 'data/sched/'
 
+ERR_LOGTAG = 'depantsed! - err: '
+
 import argparse
+import sys
 
 def main():
     args = set_and_parse_args()
@@ -32,6 +35,8 @@ def set_and_parse_args():
     # TODO: -m: with monikers
     # TODO: -w: specify a week (+/-int, int, & all)
     return parser.parse_args()
+
+def exit(message): sys.exit(ERR_LOGTAG + message)
 
 if __name__ == '__main__':
     main()
