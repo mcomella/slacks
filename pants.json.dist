@@ -1,9 +1,9 @@
 {
     "monikers": {
         "mcomella": "(IU!) This will replace my name in the leaderboard."
-    }
+    },
 
-    "champion_messages:" {
+    "champion_messages": {
         "mcomella": "(IU too!) This will display when I am first on the leaderboard."
     }
 }
