@@ -29,6 +29,7 @@ SHIFT_RANGE = SHIFT_END_HOUR - SHIFT_START_HOUR
 
 ERR_LOGTAG = 'depantsed! -'
 
+from copy import deepcopy
 from datetime import datetime
 import argparse
 import sys
@@ -37,6 +38,9 @@ def main():
     args = set_and_parse_args()
     metadata = get_metadata()
     perm_sched = CSched(PERM_SCHED_FILE)
+
+    cur_week_file = SCHED_DIR + 'sched.week.' + str(metadata['cur_week'])
+    cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
 
 def set_and_parse_args():
     """Sets up, parses and returns any command line arguments.
@@ -127,6 +131,12 @@ class CSched:
                 hhour_bounds = (half_hour_index + offa, half_hour_index + offb)
                 for hhour in range(*hhour_bounds):
                     self._sched_arr[day_index][hhour] = login
+
+    def get_copy_with_subs(self, sub_file_path):
+        # TODO: Doc.
+        sub_sched = deepcopy(self)
+        sub_sched.update_from_file(sub_file_path)
+        return sub_sched
 
 def exit(func_name, message):
     sys.exit(ERR_LOGTAG + ' ' + func_name + '(): ' + message)
