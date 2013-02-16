@@ -27,10 +27,14 @@ SHIFT_START_HOUR = 9 # 9am
 SHIFT_END_HOUR = 28 # 4am (during reading period)
 SHIFT_RANGE = SHIFT_END_HOUR - SHIFT_START_HOUR
 
+LB_HDR_FMT = ' {:>5}  {}' # Leaderboard header format to string.format().
+LB_HOUR_FMT = ' {:>5.2f}  {}' # Leaderboard hours list.
+
 ERR_LOGTAG = 'depantsed! -'
 
 from copy import deepcopy
 from datetime import datetime
+from operator import itemgetter
 import argparse
 import sys
 
@@ -42,6 +46,7 @@ def main():
     cur_week_file = SCHED_DIR + 'sched.week.' + str(metadata['cur_week'])
     cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
     cur_week_hours = cur_week_sched.get_hours_sum()
+    print_hours(cur_week_hours)
 
 def set_and_parse_args():
     """Sets up, parses and returns any command line arguments.
@@ -113,6 +118,7 @@ class CSched:
 
     def update_from_file(self, path):
         # TODO: Doc.
+        # TODO: Keep num shifts.
         with open(path) as f:
             for line in f:
                 tokens = line.split(); map(lambda s: s.strip().lower(), tokens)
@@ -147,6 +153,18 @@ class CSched:
                 if shift_login is not None:
                     hsum[shift_login] = hsum.get(shift_login, 0) + 0.5
         return hsum
+
+def print_hours(hdict):
+    # TODO: Doc.
+    print # Blank.
+    print LB_HDR_FMT.format('Hours', 'Who')
+    print LB_HDR_FMT.format('-----', '---')
+    hours_list = sorted(hdict.iteritems(), key=itemgetter(1), reverse=True)
+    for login, hours in hours_list:
+        print LB_HOUR_FMT.format(hours, login)
+    print # Blank.
+    # TODO: Print champion message.
+    # TODO: Print message to champion.
 
 def exit(func_name, message):
     sys.exit(ERR_LOGTAG + ' ' + func_name + '(): ' + message)
