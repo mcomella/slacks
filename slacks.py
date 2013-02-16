@@ -17,9 +17,11 @@ Written in Spring 2013 by Michael Comella (mcomella).
 CONSULT_DIR = '/admin/consult/'
 SCHED_DIR = CONSULT_DIR + 'data/sched/'
 PERM_SCHED_FILE = SCHED_DIR + 'sched.perm'
-
 META_FILE = SCHED_DIR + 'sched.meta' # Metadata file associated with csched.
+
 START_WEEK = 0 # The index of the initial consulting week.
+START_DAY = 1 # is Monday.
+MON, TUES, WED, THURS, FRI, SAT, SUN = range(START_DAY, START_DAY + 7)
 
 SHIFT_START_HOUR = 9 # 9am
 SHIFT_END_HOUR = 28 # 4am (during reading period)
@@ -34,7 +36,7 @@ import sys
 def main():
     args = set_and_parse_args()
     metadata = get_metadata()
-    perm_sched = get_perm_sched()
+    perm_sched = CSched(PERM_SCHED_FILE)
 
 def set_and_parse_args():
     """Sets up, parses and returns any command line arguments.
@@ -96,20 +98,35 @@ def get_metadata():
         md['cur_week'] = date_delta.days / 7 + START_WEEK
         return md
 
-def get_perm_sched():
-    # TODO: Add doc.
-    sched_arr = [[None] * 7 for i in range(SHIFT_RANGE)] # Zero array.
-    with open(PERM_SCHED_FILE) as f:
-        for line in f:
-            tokens = line.split()
-            shift = tokens[0]
-            login = tokens[1]
-            # tokens[2], if it exists, is the sub requester, which can be
-            # blissfully ignored.
-            hour_index = ord(shift[0]) - ord('a')
-            day_index = int(shift[1]) - 1 # 0 is Monday.
-            sched_arr[hour_index][day_index] = login
-    return sched_arr
+class CSched:
+    # TODO: Doc. [day][hour]
+
+    def __init__(self, file_path=None):
+        # TODO: Doc.
+        self._sched_arr = [[None] * SHIFT_RANGE * 2 for i in range(7)] # Zero.
+        if file_path: self.update_from_file(file_path)
+
+    def update_from_file(self, path):
+        # TODO: Doc.
+        with open(path) as f:
+            for line in f:
+                tokens = line.split()
+                shift, login = tokens[:2]
+                # tokens[2] is the sub requester, which is irrelevant.
+                half_hour_index = (ord(shift[0]) - ord('a')) * 2
+                day_index = int(shift[1]) - START_DAY
+
+                if day_index in (TUES, THURS) and half_hour_index in (0, 8):
+                    # 1.5 hour shifts starting on the hour.
+                    offa, offb = (0, 3)
+                elif day_index in (TUES, THURS) and half_hour_index in (2, 10):
+                    # 1.5 hour shifts starting on the half hour.
+                    offa, offb = (1, 4)
+                else: # 1 hour shift starting on the hour.
+                    offa, offb = (0, 2)
+                hhour_bounds = (half_hour_index + offa, half_hour_index + offb)
+                for hhour in range(*hhour_bounds):
+                    self._sched_arr[day_index][hhour] = login
 
 def exit(func_name, message):
     sys.exit(ERR_LOGTAG + ' ' + func_name + '(): ' + message)
