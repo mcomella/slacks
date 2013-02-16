@@ -41,6 +41,7 @@ def main():
 
     cur_week_file = SCHED_DIR + 'sched.week.' + str(metadata['cur_week'])
     cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
+    cur_week_hours = cur_week_sched.get_hours_sum()
 
 def set_and_parse_args():
     """Sets up, parses and returns any command line arguments.
@@ -137,6 +138,15 @@ class CSched:
         sub_sched = deepcopy(self)
         sub_sched.update_from_file(sub_file_path)
         return sub_sched
+
+    def get_hours_sum(self):
+        # TODO: Doc.
+        hsum = {}
+        for day in self._sched_arr:
+            for shift_login in day:
+                if shift_login is not None:
+                    hsum[shift_login] = hsum.get(shift_login, 0) + 0.5
+        return hsum
 
 def exit(func_name, message):
     sys.exit(ERR_LOGTAG + ' ' + func_name + '(): ' + message)
