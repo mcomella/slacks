@@ -18,6 +18,7 @@ CONSULT_DIR = '/admin/consult/'
 SCHED_DIR = CONSULT_DIR + 'data/sched/'
 PERM_SCHED_FILE = SCHED_DIR + 'sched.perm'
 META_FILE = SCHED_DIR + 'sched.meta' # Metadata file associated with csched.
+OPTIONS_FILE = CONSULT_DIR + 'bin/trousers/pants.json'
 
 START_WEEK = 0 # The index of the initial consulting week.
 START_DAY = 1 # is Monday.
@@ -33,19 +34,23 @@ LB_HOUR_FMT = ' {:>5.2f}  {}' # Leaderboard hours list.
 ERR_LOGTAG = 'depantsed! -'
 
 from copy import deepcopy
-from datetime import datetime
+from datetime import date, datetime
 from operator import itemgetter
 import argparse
-import sys
+import json
+import os, sys
 
 def main():
     args = set_and_parse_args()
     metadata = get_metadata()
+    options = get_options()
     perm_sched = CSched(PERM_SCHED_FILE)
 
     cur_week_file = SCHED_DIR + 'sched.week.' + str(metadata['cur_week'])
     cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
     cur_week_hours = cur_week_sched.get_hours_sum()
+
+    if displaying_monikers(): replace_with_monikers(options, cur_week_hours)
     print_hours(cur_week_hours)
 
 def set_and_parse_args():
@@ -108,6 +113,11 @@ def get_metadata():
         md['cur_week'] = date_delta.days / 7 + START_WEEK
         return md
 
+def get_options():
+    # TODO: Doc.
+    with open(OPTIONS_FILE) as f:
+        return json.load(f)
+
 class CSched:
     # TODO: Doc. [day][hour]
 
@@ -153,6 +163,19 @@ class CSched:
                 if shift_login is not None:
                     hsum[shift_login] = hsum.get(shift_login, 0) + 0.5
         return hsum
+
+def displaying_monikers():
+    # TODO: Doc.
+    # TODO: Handle -m arg.
+    cmd_name = os.path.basename(__file__)
+    return cmd_name == 'pants'
+
+def replace_with_monikers(options, hdict):
+    # TODO: Doc.
+    for login, nick in options['monikers'].iteritems():
+        if login in hdict:
+            hdict[nick] = hdict[login]
+            del hdict[login]
 
 def print_hours(hdict):
     # TODO: Doc.
