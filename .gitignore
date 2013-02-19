@@ -1,1 +1,6 @@
+# config
 pants.json
+
+# executables
+pants
+pantz
