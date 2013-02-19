@@ -31,6 +31,8 @@ SHIFT_RANGE = SHIFT_END_HOUR - SHIFT_START_HOUR
 LB_HDR_FMT = ' {:>5}  {}' # Leaderboard header format to string.format().
 LB_HOUR_FMT = ' {:>5.2f}  {}' # Leaderboard hours list.
 
+FREE_SHIFT_LOGIN = 'FREE'
+
 ERR_LOGTAG = 'depantsed! -'
 
 from copy import deepcopy
@@ -119,7 +121,7 @@ def get_options():
         return json.load(f)
 
 class CSched:
-    # TODO: Doc. [day][hour]
+    # TODO: Doc. [day][hour]. Keeps FREE.
 
     def __init__(self, file_path=None):
         # TODO: Doc.
@@ -184,6 +186,7 @@ def print_hours(hdict):
     print LB_HDR_FMT.format('-----', '---')
     hours_list = sorted(hdict.iteritems(), key=itemgetter(1), reverse=True)
     for login, hours in hours_list:
+        if login.upper() == FREE_SHIFT_LOGIN: continue
         print LB_HOUR_FMT.format(hours, login)
     print # Blank.
     # TODO: Print champion message.
