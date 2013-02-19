@@ -55,7 +55,7 @@ def main():
     cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
     cur_week_hours = cur_week_sched.get_hours_sum()
 
-    if displaying_monikers():
+    if displaying_monikers(args):
         replace_logins_with_monikers(options, cur_week_hours)
     print_hours(cur_week_hours)
 
@@ -67,7 +67,8 @@ def set_and_parse_args():
 
     """
     parser = argparse.ArgumentParser()
-    # TODO: -m: with monikers
+    parser.add_argument('-m', '--monikers', help='replace consultant logins '
+            'with monikers', action='store_true')
     # TODO: -w: specify a week (+/-int, int, & all)
     return parser.parse_args()
 
@@ -196,11 +197,10 @@ class CSched:
                     hsum[shift_login] = hsum.get(shift_login, 0) + 0.5
         return hsum
 
-def displaying_monikers():
+def displaying_monikers(args):
     "Returns True if the output should display monkers, False otherwise."
-    # TODO: Handle -m arg.
     cmd_name = os.path.basename(__file__)
-    return cmd_name == 'pants'
+    return args.monikers or cmd_name == 'pants'
 
 def replace_logins_with_monikers(options, hdict):
     "Replaces the login keys of hdict with the monikers in options."
