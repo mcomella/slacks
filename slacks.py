@@ -55,9 +55,7 @@ def main():
     cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
     cur_week_hours = cur_week_sched.get_hours_sum()
 
-    if displaying_monikers(args):
-        replace_logins_with_monikers(options, cur_week_hours)
-    print_hours(cur_week_hours)
+    print_hours(args, options, cur_week_hours)
 
 def set_and_parse_args():
     """Sets up, parses and returns any command line arguments.
@@ -197,30 +195,33 @@ class CSched:
                     hsum[shift_login] = hsum.get(shift_login, 0) + 0.5
         return hsum
 
-def displaying_monikers(args):
-    "Returns True if the output should display monkers, False otherwise."
-    cmd_name = os.path.basename(__file__)
-    return args.monikers or cmd_name == 'pants'
-
-def replace_logins_with_monikers(options, hdict):
-    "Replaces the login keys of hdict with the monikers in options."
-    for login, nick in options['monikers'].iteritems():
-        if login in hdict:
-            hdict[nick] = hdict[login]
-            del hdict[login]
-
-def print_hours(hdict):
+def print_hours(args, options, hdict):
     "Prints the consultant hours in the given {'login': hours} dict."
+    monikers = displaying_monikers(args)
+
     print # Blank.
     print LB_HDR_FMT.format('Hours', 'Who')
     print LB_HDR_FMT.format('-----', '---')
     hours_list = sorted(hdict.iteritems(), key=itemgetter(1), reverse=True)
     for login, hours in hours_list:
         if login.upper() == FREE_SHIFT_LOGIN: continue
+        if monikers and login in options['monikers']:
+            login = options['monikers'][login]
         print LB_HOUR_FMT.format(hours, login)
     print # Blank.
-    # TODO: Print champion message.
-    # TODO: Print message to champion.
+
+    # Print champion message corresponding to the winning consultant.
+    if displaying_monikers(args) and len(hours_list) > 0:
+        winner, hours = hours_list[0]
+        if winner in options['champion_messages']:
+            print options['champion_messages'][winner]
+            print # Blank.
+    # TODO: Print extra message to champion.
+
+def displaying_monikers(args):
+    "Returns True if the output should display monkers, False otherwise."
+    cmd_name = os.path.basename(__file__)
+    return args.monikers or cmd_name == 'pants'
 
 def exit(func_name, message):
     sys.exit(ERR_LOGTAG + ' ' + func_name + '(): ' + message)
