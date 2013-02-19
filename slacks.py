@@ -11,9 +11,12 @@ the csched command uses to create the weekly schedule (sched.perm and
 Pacifists are boring! Go start a pants war! Edit pants.json today!
 
 Written in Spring 2013 by Michael Comella (mcomella).
-"""
-# TODO: Merge the above text with the README text.
 
+Previous revisions:
+* (Fall 2012) trousers: Nathan Malkin (nmalkin)
+* (?) pants: ?
+
+"""
 CONSULT_DIR = '/admin/consult/'
 SCHED_DIR = CONSULT_DIR + 'data/sched/'
 PERM_SCHED_FILE = SCHED_DIR + 'sched.perm'
@@ -52,7 +55,8 @@ def main():
     cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
     cur_week_hours = cur_week_sched.get_hours_sum()
 
-    if displaying_monikers(): replace_with_monikers(options, cur_week_hours)
+    if displaying_monikers():
+        replace_logins_with_monikers(options, cur_week_hours)
     print_hours(cur_week_hours)
 
 def set_and_parse_args():
@@ -86,7 +90,7 @@ def get_metadata():
         'extend_start': (int) See above
         'sched_header': (str) See above
         'cur_week': (int) A value specifying the number of weeks since the
-                        starting week
+                    starting week
     }
 
     """
@@ -116,20 +120,42 @@ def get_metadata():
         return md
 
 def get_options():
-    # TODO: Doc.
+    """Returns options json object from OPTIONS_FILE.
+
+    Typically the options should include monikers and champion messages.
+
+    """
     with open(OPTIONS_FILE) as f:
         return json.load(f)
 
 class CSched:
-    # TODO: Doc. [day][hour]. Keeps FREE.
+    """Represents a given week's schedule and associated utility methods.
 
+    The schedule is represented in CSched._sched_arr as a list of list where
+    the outer list represents the day of the week and the inner list represents
+    the which consultant is on duty (by login) at the given time by half hour
+    increments. The time of the 0th index is determined by the constant
+    SHIFT_START_HOUR. For example, with SHIFT_START_HOUR = 9,
+
+                M          T      etc.
+    9:00am  [mcomella] [akenyon]
+    9:30am  [mcomella] [akenyon]
+    10:00am [nmalkin]  [mcomella]
+    etc.
+
+    CSched._sched_arr[1][0] = 'akenyon'
+
+    Shifts in an unknown state are listed as None (the initial value; thus no
+    input file has overidden this value yet) while any subbed shifts are
+    equivalent to the constant FREE_SHIFT_LOGIN.
+
+    """
     def __init__(self, file_path=None):
-        # TODO: Doc.
         self._sched_arr = [[None] * SHIFT_RANGE * 2 for i in range(7)] # Zero.
-        if file_path: self.update_from_file(file_path)
+        if file_path: self.update_shifts_from_file(file_path)
 
-    def update_from_file(self, path):
-        # TODO: Doc.
+    def update_shifts_from_file(self, path):
+        "Updates the shifts in current CSched object with the file at path."
         # TODO: Keep num shifts.
         with open(path) as f:
             for line in f:
@@ -152,13 +178,17 @@ class CSched:
                     self._sched_arr[day_index][hhour] = login
 
     def get_copy_with_subs(self, sub_file_path):
-        # TODO: Doc.
+        "Returns a copy of the CSched with updated shifts from sub_file_path."
         sub_sched = deepcopy(self)
-        sub_sched.update_from_file(sub_file_path)
+        sub_sched.update_shifts_from_file(sub_file_path)
         return sub_sched
 
     def get_hours_sum(self):
-        # TODO: Doc.
+        """Returns the sum of logged hours for each consultant in the CSched.
+
+        Output is returned as a dict of {'login': hours}.
+
+        """
         hsum = {}
         for day in self._sched_arr:
             for shift_login in day:
@@ -167,20 +197,20 @@ class CSched:
         return hsum
 
 def displaying_monikers():
-    # TODO: Doc.
+    "Returns True if the output should display monkers, False otherwise."
     # TODO: Handle -m arg.
     cmd_name = os.path.basename(__file__)
     return cmd_name == 'pants'
 
-def replace_with_monikers(options, hdict):
-    # TODO: Doc.
+def replace_logins_with_monikers(options, hdict):
+    "Replaces the login keys of hdict with the monikers in options."
     for login, nick in options['monikers'].iteritems():
         if login in hdict:
             hdict[nick] = hdict[login]
             del hdict[login]
 
 def print_hours(hdict):
-    # TODO: Doc.
+    "Prints the consultant hours in the given {'login': hours} dict."
     print # Blank.
     print LB_HDR_FMT.format('Hours', 'Who')
     print LB_HDR_FMT.format('-----', '---')
