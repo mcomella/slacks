@@ -40,7 +40,9 @@ ERR_LOGTAG = 'depantsed! -'
 
 from copy import deepcopy
 from datetime import date, datetime
+from getpass import getuser
 from operator import itemgetter
+from random import randint
 import argparse
 import json
 import os, sys
@@ -235,7 +237,13 @@ def print_hours(args, options, hdict):
         if winner in options['champion_messages']:
             print options['champion_messages'][winner]
             print # Blank.
-    # TODO: Print extra message to champion.
+
+        if winner == getuser():
+            # TODO: Make the winner message more clever. From pants.json?
+            print 'You are the winner, ' + winner + '!'
+            num_experts = str(randint(0, 11))
+            print num_experts + ' out of 10 experts agree: You might want ' +\
+                    'to leave the Sunlab from to time.'
 
 def displaying_monikers(args):
     "Returns True if the output should display monkers, False otherwise."
