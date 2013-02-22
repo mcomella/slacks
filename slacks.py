@@ -20,6 +20,7 @@ Previous revisions:
 CONSULT_DIR = '/admin/consult/'
 SCHED_DIR = CONSULT_DIR + 'data/sched/'
 PERM_SCHED_FILE = SCHED_DIR + 'sched.perm'
+SCHED_FILE_PREFIX = SCHED_DIR + 'sched.week.'
 META_FILE = SCHED_DIR + 'sched.meta' # Metadata file associated with csched.
 OPTIONS_FILE = CONSULT_DIR + 'bin/trousers/pants.json'
 
@@ -53,7 +54,7 @@ def main():
     options = get_options()
     perm_sched = CSched(PERM_SCHED_FILE)
 
-    cur_week_file = SCHED_DIR + 'sched.week.' + str(metadata['cur_week'])
+    cur_week_file = SCHED_FILE_PREFIX + str(metadata['cur_week'])
     cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
     cur_week_hours = cur_week_sched.get_hours_sum()
 
