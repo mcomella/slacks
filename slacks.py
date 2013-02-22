@@ -24,8 +24,8 @@ META_FILE = SCHED_DIR + 'sched.meta' # Metadata file associated with csched.
 OPTIONS_FILE = CONSULT_DIR + 'bin/trousers/pants.json'
 
 START_WEEK = 0 # The index of the initial consulting week.
-START_DAY = 1 # is Monday.
-MON, TUES, WED, THURS, FRI, SAT, SUN = range(START_DAY, START_DAY + 7)
+START_DAY = 1 # is Monday in PERM_SCHED_FILE.
+MON, TUES, WED, THURS, FRI, SAT, SUN = range(0, 7)
 
 SHIFT_START_HOUR = 9 # 9am
 SHIFT_END_HOUR = 28 # 4am (during reading period)
@@ -189,12 +189,30 @@ class CSched:
         Output is returned as a dict of {'login': hours}.
 
         """
+        now_day_index, now_hhour_index = self.convert_datetime_to_shift_index(
+                datetime.now())
         hsum = {}
-        for day in self._sched_arr:
-            for shift_login in day:
+        for day_index, day in enumerate(self._sched_arr):
+            if day_index > now_day_index: break # Future.
+            today = True if day_index is now_day_index else False
+            for hhour_index, shift_login in enumerate(day):
+                if today and (hhour_index >= now_hhour_index): break # Future.
                 if shift_login is not None:
                     hsum[shift_login] = hsum.get(shift_login, 0) + 0.5
         return hsum
+
+    def convert_datetime_to_shift_index(self, datetime):
+        "Converts the given datetime object to self._sched_arr indicies."
+        day_index = datetime.isoweekday() - START_DAY
+        hhour_offset = 0 if datetime.minute < 30 else 1 # 30 minute blocks.
+        hhour_index = (datetime.hour - SHIFT_START_HOUR) * 2 + hhour_offset
+
+        # Workaround for hours post-midnight which take on hours > 24 (ex: 1am
+        # is 25) and thus are considered the same day as the previous day.
+        if datetime.hour < SHIFT_START_HOUR:
+            day_index -= 1
+            hhour_index += 24 * 2
+        return (day_index, hhour_index)
 
 def print_hours(args, options, hdict):
     "Prints the consultant hours in the given {'login': hours} dict."
