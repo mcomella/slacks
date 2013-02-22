@@ -6,9 +6,25 @@ system.
 
 Specifically, because there is no (known) Workday API, it parses the files that
 the csched command uses to create the weekly schedule (sched.perm and
-/sched.week.[0-9]+/).
+/sched.week.[0-9]+/). The sched file format uses the following format:
 
-Pacifists are boring! Go start a pants war! Edit pants.json today!
+    a1 login
+
+where a is the shift, 1 is the day of the week, starting at Monday == 1, and
+login is the login of the consultant who's shift the timeslot is. The shifts
+are on hourly intervals (so a == 9am, b == 10am, etc.). This pattern breaks in
+a bad way on the TR 1.5 hour shifts where a == 9am, b == 10:30am, and
+d == 12pm. This accounts for some icky coding and constants.
+
+Sub files are of the format:
+
+    1) a1 login
+    2) a1 FREE_SHIFT_LOGIN requester
+
+where 1) is equivalent to the standard format, as is the a1 variable of 2).
+requester is the login of the consultant requesting the sub.
+
+By the way, pacifists are boring! Go start a pants war! Edit pants.json today!
 
 Written in Spring 2013 by Michael Comella (mcomella).
 
@@ -21,11 +37,11 @@ CONSULT_DIR = '/admin/consult/'
 SCHED_DIR = CONSULT_DIR + 'data/sched/'
 PERM_SCHED_FILE = SCHED_DIR + 'sched.perm'
 SCHED_FILE_PREFIX = SCHED_DIR + 'sched.week.'
-META_FILE = SCHED_DIR + 'sched.meta' # Metadata file associated with csched.
+META_FILE = SCHED_DIR + 'sched.meta' # csched metadata.
 OPTIONS_FILE = CONSULT_DIR + 'bin/trousers/pants.json'
 
-START_WEEK = 0 # The index of the initial consulting week.
-START_DAY = 1 # (is Monday) used to offset dates in PERM_SCHED_FILE.
+START_WEEK_OFFSET = 0 # The index of the initial consulting week.
+START_DAY_OFFSET = 1 # (is Monday) To offset dates in PERM_SCHED_FILE.
 MON, TUES, WED, THURS, FRI, SAT, SUN = range(0, 7)
 
 SHIFT_START_HOUR = 9 # 9am
@@ -33,14 +49,14 @@ SHIFT_END_HOUR = 28 # 4am (during reading period)
 SHIFT_RANGE = SHIFT_END_HOUR - SHIFT_START_HOUR
 
 LB_HDR_FMT = ' {:>5}  {}' # Leaderboard header format to string.format().
-LB_HOUR_FMT = ' {:>5.2f}  {}' # Leaderboard hours list.
+LB_HOUR_FMT = ' {:>5.2f}  {}' # Leaderboard hours listing.
 
 FREE_SHIFT_LOGIN = 'FREE'
 
 ERR_LOGTAG = 'depantsed! -'
 
 from copy import deepcopy
-from datetime import date, datetime
+from datetime import datetime
 from getpass import getuser
 from operator import itemgetter
 from random import randint
@@ -117,9 +133,9 @@ def get_metadata():
                 date_list[1]) # YMD.
 
         # NOTE: This requires the date listed in META_FILE to be on the same
-        # day of the week as START_DAY.
+        # day of the week as START_DAY_OFFSET.
         date_delta = datetime.now() - md['start_date']
-        md['cur_week'] = date_delta.days / 7 + START_WEEK
+        md['cur_week'] = date_delta.days / 7 + START_WEEK_OFFSET
         return md
 
 def get_options():
@@ -167,7 +183,7 @@ class CSched:
                 shift, login = tokens[:2]
                 # tokens[2] is the sub requester, which is irrelevant.
                 half_hour_index = (ord(shift[0]) - ord('a')) * 2
-                day_index = int(shift[1]) - START_DAY
+                day_index = int(shift[1]) - START_DAY_OFFSET
 
                 if day_index in (TUES, THURS) and half_hour_index in (0, 8):
                     # 1.5 hour shifts starting on the hour.
