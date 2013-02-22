@@ -24,7 +24,7 @@ META_FILE = SCHED_DIR + 'sched.meta' # Metadata file associated with csched.
 OPTIONS_FILE = CONSULT_DIR + 'bin/trousers/pants.json'
 
 START_WEEK = 0 # The index of the initial consulting week.
-START_DAY = 1 # is Monday in PERM_SCHED_FILE.
+START_DAY = 1 # (is Monday) used to offset dates in PERM_SCHED_FILE.
 MON, TUES, WED, THURS, FRI, SAT, SUN = range(0, 7)
 
 SHIFT_START_HOUR = 9 # 9am
@@ -108,14 +108,15 @@ def get_metadata():
             'sched_header': sched_header.rstrip()
         }
 
-        # TODO: Handle dates specified with leading zeroes.
+        # TODO: Handle dates specified with leading zeroes for extensibility.
         date_list = [int(x) for x in start_date.split('/')]
         if len(date_list) is not 3:
             exit('get_metadata', 'Unknown date format in "' + META_FILE + '".')
         md['start_date'] = datetime(date_list[2], date_list[0],
                 date_list[1]) # YMD.
 
-        # TODO: Make sure this actually returns the correct week.
+        # NOTE: This requires the date listed in META_FILE to be on the same
+        # day of the week as START_DAY.
         date_delta = datetime.now() - md['start_date']
         md['cur_week'] = date_delta.days / 7 + START_WEEK
         return md
@@ -205,7 +206,7 @@ class CSched:
 
     def convert_datetime_to_shift_index(self, datetime):
         "Converts the given datetime object to self._sched_arr indicies."
-        day_index = datetime.isoweekday() - START_DAY
+        day_index = datetime.weekday()
         hhour_offset = 0 if datetime.minute < 30 else 1 # 30 minute blocks.
         hhour_index = (datetime.hour - SHIFT_START_HOUR) * 2 + hhour_offset
 
