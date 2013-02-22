@@ -159,6 +159,7 @@ class CSched:
         with open(path) as f:
             for line in f:
                 tokens = line.split(); map(lambda s: s.strip().lower(), tokens)
+                if tokens[0] == '#': continue # A comment.
                 shift, login = tokens[:2]
                 # tokens[2] is the sub requester, which is irrelevant.
                 half_hour_index = (ord(shift[0]) - ord('a')) * 2
