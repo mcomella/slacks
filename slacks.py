@@ -265,7 +265,7 @@ def print_hours(args, options, hdict):
             print 'You are the winner, ' + winner + '!'
             num_experts = str(randint(0, 11))
             print num_experts + ' out of 10 experts agree: You might want ' + \
-                    'to leave the Sunlab from to time.'
+                    'to leave the Sunlab from time to time.'
 
 def displaying_monikers(args):
     "Returns True if the output should display monkers, False otherwise."
