@@ -124,13 +124,7 @@ def get_metadata():
             'extend_start': int(extend_start),
             'sched_header': sched_header.rstrip()
         }
-
-        # TODO: Handle dates specified with leading zeroes for extensibility.
-        date_list = [int(x) for x in start_date.split('/')]
-        if len(date_list) is not 3:
-            exit('get_metadata', 'Unknown date format in "' + META_FILE + '".')
-        md['start_date'] = datetime(date_list[2], date_list[0],
-                date_list[1]) # YMD.
+        md['start_date'] = datetime.strptime(start_date, '%m/%d/%Y')
 
         # NOTE: This requires the date listed in META_FILE to be on the same
         # day of the week as START_DAY_OFFSET.
