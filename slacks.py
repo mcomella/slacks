@@ -41,7 +41,7 @@ META_FILE = SCHED_DIR + 'sched.meta' # csched metadata.
 OPTIONS_FILE = CONSULT_DIR + 'bin/trousers/pants.json'
 
 START_WEEK_OFFSET = 0 # The index of the initial consulting week.
-START_DAY_OFFSET = 1 # (is Monday) To offset dates in PERM_SCHED_FILE.
+START_DAY_OFFSET = 1 # (is Monday) To zero-index dates in PERM_SCHED_FILE.
 MON, TUES, WED, THURS, FRI, SAT, SUN = range(0, 7)
 
 SHIFT_START_HOUR = 9 # 9am
@@ -222,7 +222,8 @@ class CSched:
         hhour_index = (datetime.hour - SHIFT_START_HOUR) * 2 + hhour_offset
 
         # Workaround for hours post-midnight which take on hours > 24 (ex: 1am
-        # is 25) and thus are considered the same day as the previous day.
+        # is hour 25 - NOT INDEX) and thus are considered to be the same day as
+        # the previous day.
         if datetime.hour < SHIFT_START_HOUR:
             day_index -= 1
             hhour_index += 24 * 2
