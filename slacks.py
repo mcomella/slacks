@@ -168,7 +168,7 @@ class CSched:
         if file_path: self.update_shifts_from_file(file_path)
 
     def update_shifts_from_file(self, path):
-        "Updates the shifts in current CSched object with the file at path."
+        """Updates the shifts in the CSched object with the file at path."""
         with open(path) as f:
             for line in f:
                 tokens = [t.strip().lower() for t in line.split()]
@@ -191,7 +191,7 @@ class CSched:
                     self._sched_arr[day_index][hhour] = login
 
     def get_copy_with_subs(self, sub_file_path):
-        "Returns a copy of the CSched with updated shifts from sub_file_path."
+        """Copies the CSched, updating it with matched shifts from the path."""
         sub_sched = deepcopy(self)
         sub_sched.update_shifts_from_file(sub_file_path)
         return sub_sched
@@ -224,7 +224,7 @@ class CSched:
                 (login, hours) in hsum.iteritems())
 
     def convert_datetime_to_shift_index(self, datetime):
-        "Converts the given datetime object to self._sched_arr indicies."
+        """Converts the given datetime object to self._sched_arr indicies."""
         day_index = datetime.weekday()
         hhour_offset = 0 if datetime.minute < 30 else 1 # 30 minute blocks.
         hhour_index = (datetime.hour - SHIFT_START_HOUR) * 2 + hhour_offset
@@ -238,7 +238,7 @@ class CSched:
         return (day_index, hhour_index)
 
 def print_hours(args, options, hdict):
-    "Prints the consultant hours in the {'login': (hours, num_shifts)} dict."
+    """Prints the hours in the {'login': (hours, num_shifts)} dict."""
     monikers = displaying_monikers(args)
 
     print # Blank.
@@ -268,7 +268,7 @@ def print_hours(args, options, hdict):
                     'to leave the Sunlab from time to time.'
 
 def displaying_monikers(args):
-    "Returns True if the output should display monkers, False otherwise."
+    """Returns True if the output should display monkers, False otherwise."""
     cmd_name = os.path.basename(__file__)
     return args.monikers or cmd_name == 'pants'
 
