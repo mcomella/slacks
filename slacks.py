@@ -172,7 +172,7 @@ class CSched:
         # TODO: Keep num shifts.
         with open(path) as f:
             for line in f:
-                tokens = line.split(); map(lambda s: s.strip().lower(), tokens)
+                tokens = [t.strip().lower() for t in line.split()]
                 if tokens[0] == '#': continue # A comment.
                 shift, login = tokens[:2]
                 # tokens[2] is the sub requester, which is irrelevant.
