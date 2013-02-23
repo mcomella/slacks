@@ -48,8 +48,8 @@ SHIFT_START_HOUR = 9 # 9am
 SHIFT_END_HOUR = 28 # 4am (during reading period)
 SHIFT_RANGE = SHIFT_END_HOUR - SHIFT_START_HOUR
 
-LB_HDR_FMT = ' {:>5}  {}' # Leaderboard header format to string.format().
-LB_HOUR_FMT = ' {:>5.2f}  {}' # Leaderboard hours listing.
+LB_HDR_FMT = ' {:>5}  {:>3}  {}' # Leaderboard header format to string.format().
+LB_HOUR_FMT = ' {:>5.2f}  {:>3}  {}' # Leaderboard hours listing.
 
 FREE_SHIFT_LOGIN = 'FREE'
 
@@ -169,7 +169,6 @@ class CSched:
 
     def update_shifts_from_file(self, path):
         "Updates the shifts in current CSched object with the file at path."
-        # TODO: Keep num shifts.
         with open(path) as f:
             for line in f:
                 tokens = [t.strip().lower() for t in line.split()]
@@ -200,12 +199,14 @@ class CSched:
     def get_hours_sum(self):
         """Returns the sum of logged hours for each consultant in the CSched.
 
-        Output is returned as a dict of {'login': hours}.
+        Output is returned as a dict of {'login': (hours, num_shifts)}.
 
         """
+        hsum = {}
+        num_shifts = {}
+        prev_shift_login = None # To find consecutive shifts.
         now_day_index, now_hhour_index = self.convert_datetime_to_shift_index(
                 datetime.now())
-        hsum = {}
         for day_index, day in enumerate(self._sched_arr):
             if day_index > now_day_index: break # Future.
             today = True if day_index is now_day_index else False
@@ -213,7 +214,14 @@ class CSched:
                 if today and (hhour_index >= now_hhour_index): break # Future.
                 if shift_login is not None:
                     hsum[shift_login] = hsum.get(shift_login, 0) + 0.5
-        return hsum
+                    if prev_shift_login != shift_login: # Not consecutive.
+                        num_shifts[shift_login] = \
+                                num_shifts.get(shift_login, 0) + 1
+                prev_shift_login = shift_login
+
+        # Merge the hsum & num_shifts dicts.
+        return dict((login, (hours, num_shifts.get(login, None)) ) for
+                (login, hours) in hsum.iteritems())
 
     def convert_datetime_to_shift_index(self, datetime):
         "Converts the given datetime object to self._sched_arr indicies."
@@ -230,18 +238,19 @@ class CSched:
         return (day_index, hhour_index)
 
 def print_hours(args, options, hdict):
-    "Prints the consultant hours in the given {'login': hours} dict."
+    "Prints the consultant hours in the {'login': (hours, num_shifts)} dict."
     monikers = displaying_monikers(args)
 
     print # Blank.
-    print LB_HDR_FMT.format('Hours', 'Who')
-    print LB_HDR_FMT.format('-----', '---')
+    print LB_HDR_FMT.format('Hours', 'Num', 'Who')
+    print LB_HDR_FMT.format('-----', '---', '---')
     hours_list = sorted(hdict.iteritems(), key=itemgetter(1), reverse=True)
-    for login, hours in hours_list:
+    for login, shift_data in hours_list:
+        hours, num_shifts = shift_data
         if login.upper() == FREE_SHIFT_LOGIN: continue
         if monikers and login in options['monikers']:
             login = options['monikers'][login]
-        print LB_HOUR_FMT.format(hours, login)
+        print LB_HOUR_FMT.format(hours, num_shifts, login)
     print # Blank.
 
     # Print champion message corresponding to the winning consultant.
@@ -255,7 +264,7 @@ def print_hours(args, options, hdict):
             # TODO: Make the winner message more clever. From pants.json?
             print 'You are the winner, ' + winner + '!'
             num_experts = str(randint(0, 11))
-            print num_experts + ' out of 10 experts agree: You might want ' +\
+            print num_experts + ' out of 10 experts agree: You might want ' + \
                     'to leave the Sunlab from to time.'
 
 def displaying_monikers(args):
