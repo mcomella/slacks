@@ -5,7 +5,7 @@ CS consulting program. This revision is intended to work with the Workday hours
 system.
 
 Specifically, because there is no (known) Workday API, it parses the files that
-the csched command uses to create the weekly schedule (sched.perm and
+the csched command uses to create the weekly schedule (sched, sched.meta, and
 /sched.week.[0-9]+/). The sched file format uses the following format:
 
     a1 login
@@ -35,7 +35,7 @@ Previous revisions:
 """
 CONSULT_DIR = '/admin/consult/'
 SCHED_DIR = CONSULT_DIR + 'data/sched/'
-PERM_SCHED_FILE = SCHED_DIR + 'sched.perm'
+PERM_SCHED_FILE = SCHED_DIR + 'sched'
 SCHED_FILE_PREFIX = SCHED_DIR + 'sched.week.'
 META_FILE = SCHED_DIR + 'sched.meta' # csched metadata.
 OPTIONS_FILE = CONSULT_DIR + 'bin/trousers/pants.json'
