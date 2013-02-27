@@ -114,7 +114,7 @@ def get_metadata():
     """
     with open(META_FILE) as f:
         file_lines = f.readlines()
-        if len(file_lines) is not 1:
+        if len(file_lines) != 1:
             exit('get_metadata', 'Unknown format in "' + META_FILE + '".')
         # string.split(sep=whitespace, maxsplit=3).
         start_date, num_weeks, extend_start, sched_header = tuple(
@@ -172,7 +172,7 @@ class CSched:
         with open(path) as f:
             for line in f:
                 tokens = [t.strip().lower() for t in line.split()]
-                if len(tokens) is 0 or tokens[0][0] == '#': continue # Comment.
+                if len(tokens) == 0 or tokens[0][0] == '#': continue # Comment.
                 shift, login = tokens[:2]
                 # tokens[2] is the sub requester, which is irrelevant.
                 half_hour_index = (ord(shift[0]) - ord('a')) * 2
@@ -209,7 +209,7 @@ class CSched:
                 datetime.now())
         for day_index, day in enumerate(self._sched_arr):
             if day_index > now_day_index: break # Future.
-            today = True if day_index is now_day_index else False
+            today = True if day_index == now_day_index else False
             for hhour_index, shift_login in enumerate(day):
                 if today and (hhour_index >= now_hhour_index): break # Future.
                 if shift_login is not None:
