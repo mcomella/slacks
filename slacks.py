@@ -38,7 +38,7 @@ SCHED_DIR = CONSULT_DIR + 'data/sched/'
 PERM_SCHED_FILE = SCHED_DIR + 'sched'
 SCHED_FILE_PREFIX = SCHED_DIR + 'sched.week.'
 META_FILE = SCHED_DIR + 'sched.meta' # csched metadata.
-OPTIONS_FILE = CONSULT_DIR + 'bin/trousers/pants.json'
+OPTIONS_FILE = CONSULT_DIR + 'bin/slacks/pants.json'
 
 START_WEEK_OFFSET = 0 # The index of the initial consulting week.
 START_DAY_OFFSET = 1 # (is Monday) To zero-index dates in PERM_SCHED_FILE.
