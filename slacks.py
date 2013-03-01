@@ -205,14 +205,19 @@ class CSched:
         hsum = {}
         num_shifts = {}
         prev_shift_login = None # To find consecutive shifts.
-        now_day_index, now_hhour_index = self.convert_datetime_to_shift_index(
-                datetime.now())
+        now = datetime.now() 
+        now_day_index, now_hhour_index = self.convert_datetime_to_shift_index(now) 
+        remaining_minutes = now.minute if now.minute < 30 else now.minute - 30
         for day_index, day in enumerate(self._sched_arr):
             if day_index > now_day_index: break # Future.
             today = True if day_index == now_day_index else False
             for hhour_index, shift_login in enumerate(day):
-                if today and (hhour_index >= now_hhour_index): break # Future.
+                if today and (hhour_index > now_hhour_index): break # Future.
                 if shift_login is not None:
+                    if today and (hhour_index == now_hhour_index): # Only adds minute counts for current shift
+                        hsum[shift_login] = hsum.get(shift_login, 0) + remaining_minutes / 60.
+                        num_shifts[shift_login] = num_shifts.get(shift_login, 0) 
+                        break
                     hsum[shift_login] = hsum.get(shift_login, 0) + 0.5
                     if prev_shift_login != shift_login: # Not consecutive.
                         num_shifts[shift_login] = \
