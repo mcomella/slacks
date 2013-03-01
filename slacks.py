@@ -40,6 +40,8 @@ SCHED_FILE_PREFIX = SCHED_DIR + 'sched.week.'
 META_FILE = SCHED_DIR + 'sched.meta' # csched metadata.
 OPTIONS_FILE = CONSULT_DIR + 'bin/slacks/pants.json'
 
+AUX_HOUR_PREFIX = 'aux hours: ' # Prefix for args help string.
+
 START_WEEK_OFFSET = 0 # The index of the initial consulting week.
 START_DAY_OFFSET = 1 # (is Monday) To zero-index dates in PERM_SCHED_FILE.
 MON, TUES, WED, THURS, FRI, SAT, SUN = range(0, 7)
@@ -68,13 +70,18 @@ def main():
     args = set_and_parse_args()
     metadata = get_metadata()
     options = get_options()
-    perm_sched = CSched(PERM_SCHED_FILE)
 
+    perm_sched = CSched(PERM_SCHED_FILE)
     cur_week_file = SCHED_FILE_PREFIX + str(metadata['cur_week'])
     cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
     cur_week_hours = cur_week_sched.get_hours_sum()
 
-    print_hours(args, options, cur_week_hours)
+    if not args.add and not args.delete and not args.list:
+        print_hours(args, options, cur_week_hours)
+    elif args.add: add_aux_hours()
+    elif args.delete: delete_aux_hours()
+
+    if args.list: print_aux_hours()
 
 def set_and_parse_args():
     """Sets up, parses and returns any command line arguments.
@@ -87,7 +94,21 @@ def set_and_parse_args():
     parser.add_argument('-m', '--monikers', help='replace consultant logins '
             'with monikers', action='store_true')
     # TODO: -w: specify a week (+/-int, int, & all)
-    return parser.parse_args()
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-a', '--add', nargs=2, metavar=('MIN', 'COMMENT'),
+            action='store', help=AUX_HOUR_PREFIX + 'add MIN minutes with '
+            'COMMENT')
+    group.add_argument('-d', '--delete', action='store_true',
+            help=AUX_HOUR_PREFIX + 'deletes the most recent hours block')
+    parser.add_argument('-l', '--list', action='store_true',
+            help=AUX_HOUR_PREFIX + 'display logged hours')
+
+    namespace = parser.parse_args()
+    if namespace.add: # Verify --add MIN is an int.
+        try: int(namespace.add[0])
+        except ValueError: parser.error('argument -a/--add: expected int MIN')
+    return namespace
 
 def get_metadata():
     """Retrieves metadata associated with csched.
@@ -280,6 +301,15 @@ def displaying_monikers(args):
     """Returns True if the output should display monkers, False otherwise."""
     cmd_name = os.path.basename(__file__)
     return args.monikers or cmd_name == 'pants'
+
+def add_aux_hours():
+    print 'NOT YET IMPLEMENTED: add_aux_hours()'
+
+def print_aux_hours():
+    print 'NOT YET IMPLEMENTED: print_aux_hours()'
+
+def delete_aux_hours():
+    print 'NOT YET IMPLEMENTED: delete_aux_hours()'
 
 def exit(func_name, message):
     sys.exit(ERR_LOGTAG + ' ' + func_name + '(): ' + message)
