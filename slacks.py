@@ -83,14 +83,15 @@ def main():
 
     mode = 'r+' if args.add or args.delete else 'r'
     with open(AUX_HOUR_FILE, mode) as f:
-        fcntl.lockf(f, fcntl.LOCK_EX) # Acquire exclusive file lock.
+        lock_mode = fcntl.LOCK_EX if args.add or args.delete else fcntl.LOCK_SH
+        fcntl.lockf(f, lock_mode)
         aux_hours = json.load(f)
 
         if not args.add and not args.delete and not args.list:
             print_hours(args, options, cur_week_hours)
         elif args.add: add_aux_hours(args, cur_week_num, aux_hours, f)
         elif args.delete: delete_aux_hours(cur_week_num, aux_hours, f)
-        if args.list: print_aux_hours()
+        if args.list: print_aux_hours(cur_week_num, aux_hours)
 
         fcntl.lockf(f, fcntl.LOCK_UN) # Unlock.
 
@@ -329,8 +330,25 @@ def add_aux_hours(args, cur_week_num, aux_hours, f):
     print AUX_HOUR_PREFIX + 'Added ' + str(minutes) + ' minutes with ' + \
             'comment, "' + comment + '".'
 
-def print_aux_hours():
-    print 'NOT YET IMPLEMENTED: print_aux_hours()'
+def print_aux_hours(cur_week_num, aux_hours):
+    """Prints the auxiliary hours to the terminal."""
+    cur_week_num = str(cur_week_num)
+    aux_hours_sum = get_aux_hours_sum(aux_hours, cur_week_num)
+    if len(aux_hours_sum) == 0:
+        print 'Auxiliary Hours: No hours logged this week.'
+        return
+
+    print # Blank.
+    print ' Auxiliary Hours'
+    print # Blank.
+    print LB_HDR_FMT.format('Hours', 'Num', 'Who')
+    print LB_HDR_FMT.format('-----', '---', '---')
+    sorted_sum = sorted(aux_hours_sum.iteritems(), key=itemgetter(1),
+            reverse=True)
+    for login, (hours, num_shifts) in sorted_sum:
+        # TODO: Add monikers.
+        print LB_HOUR_FMT.format(hours, num_shifts, login)
+    print # Blank.
 
 def delete_aux_hours(cur_week_num, aux_hours, f):
     """Removes logged aux_hours for the current user, writing to open file f.
@@ -357,6 +375,17 @@ def replace_aux_hours(aux_hours, f):
     f.seek(0)
     json.dump(aux_hours, f, indent=2)
     f.write('\n') # To make vim happy. ^_^
+
+def get_aux_hours_sum(aux_hours, week_num):
+    """Returns {login: (hours, num_shifts)} for aux_hours of the given week."""
+    hours_sum = {}
+    if week_num in aux_hours:
+        for login, consultant_week in aux_hours[week_num].iteritems():
+            minutes = 0
+            # shift: (timestamp, duration, comment).
+            for shift in consultant_week: minutes += shift[1]
+            hours_sum[login] = (minutes / 60., len(consultant_week))
+    return hours_sum
 
 def exit(func_name, message):
     sys.exit(ERR_LOGTAG + ' ' + func_name + '(): ' + message)
