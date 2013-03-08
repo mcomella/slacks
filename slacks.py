@@ -75,20 +75,20 @@ def main():
     metadata = get_metadata()
     options = get_options()
 
-    perm_sched = CSched(PERM_SCHED_FILE)
+    perm_sched = CSched(None, PERM_SCHED_FILE)
     cur_week_num = metadata['cur_week']
     cur_week_file = SCHED_FILE_PREFIX + str(cur_week_num)
-    cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
-    cur_week_hours = cur_week_sched.get_hours_sum()
+    cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file, cur_week_num)
 
     mode = 'r+' if args.add or args.delete else 'r'
     with open(AUX_HOUR_FILE, mode) as f:
         lock_mode = fcntl.LOCK_EX if args.add or args.delete else fcntl.LOCK_SH
         fcntl.lockf(f, lock_mode)
         aux_hours = json.load(f)
+        cur_week_sched.merge_aux_hours(aux_hours)
 
         if not args.add and not args.delete and not args.list:
-            print_hours(args, options, cur_week_hours)
+            print_hours(args, options, cur_week_sched.get_hours_sum())
         elif args.add: add_aux_hours(args, cur_week_num, aux_hours, f)
         elif args.delete: delete_aux_hours(cur_week_num, aux_hours, f)
         if args.list: print_aux_hours(cur_week_num, aux_hours)
@@ -195,8 +195,12 @@ class CSched:
     input file has overidden this value yet) while any subbed shifts are
     equivalent to the constant FREE_SHIFT_LOGIN.
 
+    CSched.cur_week_num is an string of digits for which week this schedule
+    represents.
+
     """
-    def __init__(self, file_path=None):
+    def __init__(self, cur_week_num, file_path=None):
+        self.cur_week_num = str(cur_week_num)
         self._sched_arr = [[None] * SHIFT_RANGE * 2 for i in range(7)] # Zero.
         if file_path: self.update_shifts_from_file(file_path)
 
@@ -223,10 +227,15 @@ class CSched:
                 for hhour in range(*hhour_bounds):
                     self._sched_arr[day_index][hhour] = login
 
-    def get_copy_with_subs(self, sub_file_path):
+    def merge_aux_hours(self, aux_hours):
+        """Adds the given aux hours info to the calling CSched object."""
+        self.aux_hours = aux_hours[self.cur_week_num]
+
+    def get_copy_with_subs(self, sub_file_path, cur_week_num):
         """Copies the CSched, updating it with matched shifts from the path."""
         sub_sched = deepcopy(self)
         sub_sched.update_shifts_from_file(sub_file_path)
+        sub_sched.cur_week_num = str(cur_week_num)
         return sub_sched
 
     def get_hours_sum(self):
@@ -262,8 +271,32 @@ class CSched:
                 prev_shift_login = shift_login
 
         # Merge the hsum & num_shifts dicts.
-        return dict((login, (hours, num_shifts.get(login, None)) ) for
+        hdict = dict((login, (hours, num_shifts.get(login, None)) ) for
                 (login, hours) in hsum.iteritems())
+        if not hasattr(self, 'aux_hours') or self.cur_week_num == 'None':
+            return hdict
+
+        # Add aux_hours to output.
+        aux_hours_sum = self.get_aux_hours_sum()
+        return self._merge_hdict_and_aux_hours(hdict, aux_hours_sum)
+
+    def get_aux_hours_sum(self):
+        """Returns {login: (hours, num_shifts)} of aux_hours for this obj."""
+        return get_one_week_aux_hours_sum(self.aux_hours)
+
+    def _merge_hdict_and_aux_hours(self, hdict, aux_hours_sum):
+        """Sums the {login: (hours, num_shifts)} dict with the aux hours dict.
+
+        Modifies the given hdict in place and returns a reference to it.
+
+        """
+        for login in aux_hours_sum:
+            hours, num_shifts = hdict.get(login, (0, 0))
+            aux_hours, aux_num_shifts = aux_hours_sum[login]
+            hours += aux_hours
+            num_shifts += aux_num_shifts
+            hdict[login] = (hours, num_shifts)
+        return hdict
 
     def convert_datetime_to_shift_index(self, datetime):
         """Converts the given datetime object to self._sched_arr indicies."""
@@ -333,7 +366,7 @@ def add_aux_hours(args, cur_week_num, aux_hours, f):
 def print_aux_hours(cur_week_num, aux_hours):
     """Prints the auxiliary hours to the terminal."""
     cur_week_num = str(cur_week_num)
-    aux_hours_sum = get_aux_hours_sum(aux_hours, cur_week_num)
+    aux_hours_sum = get_one_week_aux_hours_sum(aux_hours[cur_week_num])
     if len(aux_hours_sum) == 0:
         print 'Auxiliary Hours: No hours logged this week.'
         return
@@ -376,15 +409,18 @@ def replace_aux_hours(aux_hours, f):
     json.dump(aux_hours, f, indent=2)
     f.write('\n') # To make vim happy. ^_^
 
-def get_aux_hours_sum(aux_hours, week_num):
-    """Returns {login: (hours, num_shifts)} for aux_hours of the given week."""
+def get_one_week_aux_hours_sum(aux_hours):
+    """Returns {login: (hours, num_shifts)} for aux_hours.
+
+    aux_hours should be an aux_hours object for a single week.
+
+    """
     hours_sum = {}
-    if week_num in aux_hours:
-        for login, consultant_week in aux_hours[week_num].iteritems():
-            minutes = 0
-            # shift: (timestamp, duration, comment).
-            for shift in consultant_week: minutes += shift[1]
-            hours_sum[login] = (minutes / 60., len(consultant_week))
+    for login, consultant_week in aux_hours.iteritems():
+        minutes = 0
+        # shift: (timestamp, duration, comment).
+        for shift in consultant_week: minutes += shift[1]
+        hours_sum[login] = (minutes / 60., len(consultant_week))
     return hours_sum
 
 def exit(func_name, message):
