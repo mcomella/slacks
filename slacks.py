@@ -42,6 +42,8 @@ OPTIONS_FILE = CONSULT_DIR + 'bin/slacks/pants.json'
 AUX_HOUR_FILE = CONSULT_DIR + 'bin/slacks/aux_hours.json'
 
 AUX_HOUR_PREFIX = 'aux hours: ' # Prefix for args help string.
+AUX_HOUR_NOT_LOGGED = AUX_HOUR_PREFIX + 'No hours logged for the current ' + \
+        'week. Cannot delete.'
 
 START_WEEK_OFFSET = 0 # The index of the initial consulting week.
 START_DAY_OFFSET = 1 # (is Monday) To zero-index dates in PERM_SCHED_FILE.
@@ -87,7 +89,7 @@ def main():
         if not args.add and not args.delete and not args.list:
             print_hours(args, options, cur_week_hours)
         elif args.add: add_aux_hours(args, cur_week_num, aux_hours, f)
-        elif args.delete: delete_aux_hours()
+        elif args.delete: delete_aux_hours(cur_week_num, aux_hours, f)
         if args.list: print_aux_hours()
 
         fcntl.lockf(f, fcntl.LOCK_UN) # Unlock.
@@ -330,8 +332,24 @@ def add_aux_hours(args, cur_week_num, aux_hours, f):
 def print_aux_hours():
     print 'NOT YET IMPLEMENTED: print_aux_hours()'
 
-def delete_aux_hours():
-    print 'NOT YET IMPLEMENTED: delete_aux_hours()'
+def delete_aux_hours(cur_week_num, aux_hours, f):
+    """Removes logged aux_hours for the current user, writing to open file f.
+
+    This removal pops the most recently added shift, like a stack. A shift is
+    only removeable if it was logged during the current week.
+
+    """
+    cur_week_num = str(cur_week_num)
+    login = getuser()
+    if cur_week_num in aux_hours and login in aux_hours[cur_week_num] and \
+            len(aux_hours[cur_week_num][login]) > 0:
+        users_cur_week_shifts = aux_hours[cur_week_num][login]
+        removed_shift = users_cur_week_shifts.pop()
+        replace_aux_hours(aux_hours, f)
+        print AUX_HOUR_PREFIX + 'Removed ' + str(removed_shift[1]) + ' ' + \
+                'minute shift with comment, "' + removed_shift[2] + '".'
+    else:
+        print AUX_HOUR_NOT_LOGGED
 
 def replace_aux_hours(aux_hours, f):
     """Replaces the contents of open file f with the aux_hours JSON object."""
