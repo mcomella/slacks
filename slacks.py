@@ -146,7 +146,7 @@ class CSched:
 
     The schedule is represented in CSched._sched_arr as a list of list where
     the outer list represents the day of the week and the inner list represents
-    the which consultant is on duty (by login) at the given time by half hour
+    which consultant is on duty (by login) at the given time by half hour
     increments. The time of the 0th index is determined by the constant
     SHIFT_START_HOUR. For example, with SHIFT_START_HOUR = 9,
 
