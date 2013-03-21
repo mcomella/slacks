@@ -24,6 +24,18 @@ Sub files are of the format:
 where 1) is equivalent to the standard format, as is the a1 variable of 2).
 requester is the login of the consultant requesting the sub.
 
+Consultants can additionally log hours outside of the current week's csched via
+several command line flags. These hours are known as "auxiliary hours", or "aux
+hours" for short. Aux hour additions add the specified number of minutes while
+removal will pop the number of minutes specified in the last add command, like
+a stack. Aux hours are stored in a json file of the format:
+
+    {"week_num": {"login": [ [unix_timestamp, minutes, comment] ] } }
+
+where unix_timestamp = the time the shift was logged
+      minutes = the duration of the shift in minutes
+      comment = a comment dictating what the shift was scheduled for
+
 By the way, pacifists are boring! Go start a pants war! Edit pants.json today!
 
 Written in Spring 2013 by Michael Comella (mcomella).
