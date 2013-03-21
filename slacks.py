@@ -39,6 +39,7 @@ PERM_SCHED_FILE = SCHED_DIR + 'sched'
 SCHED_FILE_PREFIX = SCHED_DIR + 'sched.week.'
 META_FILE = SCHED_DIR + 'sched.meta' # csched metadata.
 OPTIONS_FILE = CONSULT_DIR + 'bin/slacks/pants.json'
+AUX_HOUR_FILE = CONSULT_DIR + 'bin/slacks/aux_hours.json'
 
 AUX_HOUR_PREFIX = 'aux hours: ' # Prefix for args help string.
 
@@ -62,9 +63,10 @@ from datetime import datetime
 from getpass import getuser
 from operator import itemgetter
 from random import randint
+from time import mktime
 import argparse
 import json
-import os, sys
+import fcntl, os, sys
 
 def main():
     args = set_and_parse_args()
@@ -72,16 +74,23 @@ def main():
     options = get_options()
 
     perm_sched = CSched(PERM_SCHED_FILE)
-    cur_week_file = SCHED_FILE_PREFIX + str(metadata['cur_week'])
+    cur_week_num = metadata['cur_week']
+    cur_week_file = SCHED_FILE_PREFIX + str(cur_week_num)
     cur_week_sched = perm_sched.get_copy_with_subs(cur_week_file)
     cur_week_hours = cur_week_sched.get_hours_sum()
 
-    if not args.add and not args.delete and not args.list:
-        print_hours(args, options, cur_week_hours)
-    elif args.add: add_aux_hours()
-    elif args.delete: delete_aux_hours()
+    mode = 'r+' if args.add or args.delete else 'r'
+    with open(AUX_HOUR_FILE, mode) as f:
+        fcntl.lockf(f, fcntl.LOCK_EX) # Acquire exclusive file lock.
+        aux_hours = json.load(f)
 
-    if args.list: print_aux_hours()
+        if not args.add and not args.delete and not args.list:
+            print_hours(args, options, cur_week_hours)
+        elif args.add: add_aux_hours(args, cur_week_num, aux_hours, f)
+        elif args.delete: delete_aux_hours()
+        if args.list: print_aux_hours()
+
+        fcntl.lockf(f, fcntl.LOCK_UN) # Unlock.
 
 def set_and_parse_args():
     """Sets up, parses and returns any command line arguments.
@@ -302,14 +311,34 @@ def displaying_monikers(args):
     cmd_name = os.path.basename(__file__)
     return args.monikers or cmd_name == 'pants'
 
-def add_aux_hours():
-    print 'NOT YET IMPLEMENTED: add_aux_hours()'
+def add_aux_hours(args, cur_week_num, aux_hours, f):
+    """Adds the hours given in args to aux_hours, writing it to open file f."""
+    cur_week_num = str(cur_week_num)
+    if cur_week_num not in aux_hours: aux_hours[cur_week_num] = {}
+    cur_week_hours = aux_hours[cur_week_num]
+    login = getuser()
+    if login not in cur_week_hours: cur_week_hours[login] = []
+
+    minutes, comment = int(args.add[0]), args.add[1]
+    shift_info = (int(mktime(datetime.utcnow().timetuple())), minutes, comment)
+    cur_week_hours[login].append(shift_info)
+    replace_aux_hours(aux_hours, f)
+
+    print AUX_HOUR_PREFIX + 'Added ' + str(minutes) + ' minutes with ' + \
+            'comment, "' + comment + '".'
 
 def print_aux_hours():
     print 'NOT YET IMPLEMENTED: print_aux_hours()'
 
 def delete_aux_hours():
     print 'NOT YET IMPLEMENTED: delete_aux_hours()'
+
+def replace_aux_hours(aux_hours, f):
+    """Replaces the contents of open file f with the aux_hours JSON object."""
+    f.truncate(0)
+    f.seek(0)
+    json.dump(aux_hours, f, indent=2)
+    f.write('\n') # To make vim happy. ^_^
 
 def exit(func_name, message):
     sys.exit(ERR_LOGTAG + ' ' + func_name + '(): ' + message)
