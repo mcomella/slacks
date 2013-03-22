@@ -277,7 +277,7 @@ def print_hours(args, options, hdict):
                     'to leave the Sunlab from time to time.'
 
 def displaying_monikers(args):
-    """Returns True if the output should display monkers, False otherwise."""
+    """Returns True if the output should display monikers, False otherwise."""
     cmd_name = os.path.basename(__file__)
     return args.monikers or cmd_name == 'pants'
 
