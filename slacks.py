@@ -53,6 +53,9 @@ META_FILE = SCHED_DIR + 'sched.meta' # csched metadata.
 OPTIONS_FILE = CONSULT_DIR + 'bin/slacks/pants.json'
 AUX_HOUR_FILE = CONSULT_DIR + 'bin/slacks/aux_hours.json'
 
+# Error str for --add arg in parser.error().
+ARGS_ADD_ERR = 'argument -a/--add: expected positive int MIN'
+
 AUX_HOUR_PREFIX = 'aux hours: ' # Prefix for args help string.
 AUX_HOUR_NOT_LOGGED = AUX_HOUR_PREFIX + 'No hours logged for the current ' + \
         'week. Cannot delete.'
@@ -129,9 +132,11 @@ def set_and_parse_args():
             help=AUX_HOUR_PREFIX + 'display logged hours')
 
     namespace = parser.parse_args()
-    if namespace.add: # Verify --add MIN is an int.
-        try: int(namespace.add[0])
-        except ValueError: parser.error('argument -a/--add: expected int MIN')
+    if namespace.add: # Verify --add MIN is a positive int.
+        try: minutes = int(namespace.add[0])
+        except ValueError: parser.error(ARGS_ADD_ERR)
+        else:
+            if minutes < 1: parser.error(ARGS_ADD_ERR)
     return namespace
 
 def get_metadata():
