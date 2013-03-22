@@ -246,7 +246,7 @@ class CSched:
 
     def merge_aux_hours(self, aux_hours):
         """Adds the given aux hours info to the calling CSched object."""
-        self.aux_hours = aux_hours[self.cur_week_num]
+        self.aux_hours = aux_hours.get(self.cur_week_num, {})
 
     def get_copy_with_subs(self, sub_file_path, cur_week_num):
         """Copies the CSched, updating it with matched shifts from the path."""
@@ -383,7 +383,7 @@ def add_aux_hours(args, cur_week_num, aux_hours, f):
 def print_aux_hours(cur_week_num, aux_hours):
     """Prints the auxiliary hours to the terminal."""
     cur_week_num = str(cur_week_num)
-    aux_hours_sum = get_one_week_aux_hours_sum(aux_hours[cur_week_num])
+    aux_hours_sum = get_one_week_aux_hours_sum(aux_hours.get(cur_week_num, {}))
     if len(aux_hours_sum) == 0:
         print 'Auxiliary Hours: No hours logged this week.'
         return
