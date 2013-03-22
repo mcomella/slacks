@@ -196,7 +196,7 @@ class CSched:
 
     The schedule is represented in CSched._sched_arr as a list of list where
     the outer list represents the day of the week and the inner list represents
-    the which consultant is on duty (by login) at the given time by half hour
+    which consultant is on duty (by login) at the given time by half hour
     increments. The time of the 0th index is determined by the constant
     SHIFT_START_HOUR. For example, with SHIFT_START_HOUR = 9,
 
@@ -360,7 +360,7 @@ def print_hours(args, options, hdict):
                     'to leave the Sunlab from time to time.'
 
 def displaying_monikers(args):
-    """Returns True if the output should display monkers, False otherwise."""
+    """Returns True if the output should display monikers, False otherwise."""
     cmd_name = os.path.basename(__file__)
     return args.monikers or cmd_name == 'pants'
 
