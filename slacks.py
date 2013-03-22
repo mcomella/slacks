@@ -407,10 +407,22 @@ def delete_aux_hours(cur_week_num, aux_hours, f):
     if cur_week_num in aux_hours and login in aux_hours[cur_week_num] and \
             len(aux_hours[cur_week_num][login]) > 0:
         users_cur_week_shifts = aux_hours[cur_week_num][login]
-        removed_shift = users_cur_week_shifts.pop()
-        replace_aux_hours(aux_hours, f)
-        print AUX_HOUR_PREFIX + 'Removed ' + str(removed_shift[1]) + ' ' + \
-                'minute shift with comment, "' + removed_shift[2] + '".'
+        shift_to_rm = users_cur_week_shifts[-1]
+        shift_datetime = datetime.fromtimestamp(shift_to_rm[0])
+        shift_time_str = shift_datetime.strftime('%H:%m (%a %m/%d)')
+        try:
+            # Prompt for users consent to delete.
+            res = raw_input(AUX_HOUR_PREFIX + 'Confirm deletion of ' + \
+                    str(shift_to_rm[1]) + ' minutes at ' + shift_time_str + \
+                    ', with comment, "' + shift_to_rm[2] + '" (y/n)? ')
+        except EOFError:
+            sys.exit('\n' + AUX_HOUR_PREFIX + 'Deletion cancelled.')
+        else:
+            if res != 'y': sys.exit(AUX_HOUR_PREFIX + 'Deletion cancelled.')
+
+            removed_shift = users_cur_week_shifts.pop()
+            replace_aux_hours(aux_hours, f)
+            print AUX_HOUR_PREFIX + 'Shift successfully deleted.'
     else:
         print AUX_HOUR_NOT_LOGGED
 
