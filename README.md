@@ -6,6 +6,11 @@ system.
 
 Usage
 -----
+To display the hours leaderboard, run `./slacks.py`.
+
+To log auxiliary hours on the leaderboard, see the associated help text
+(`./slacks.py --help`).
+
 If you want to start a pants war, edit pants.json.
 
 History
